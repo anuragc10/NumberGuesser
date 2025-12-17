@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef} from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { connectWebSocket, subscribeToRoom, disconnectWebSocket } from '../services/websocket';
 import { submitGuess, getGuessHistory, endGame } from '../services/api';
 import { LEVELS } from '../utils/constants';
@@ -19,10 +19,10 @@ const GameStarted = ({ gameData }) => {
   const [isSoundOn, setIsSoundOn] = useState(true);
   const [copied, setCopied] = useState(false);
 
-  
+
 
   const [isWaitingForPlayer, setIsWaitingForPlayer] = useState(
-    gameData.gameMode === 'MULTIPLAYER' && 
+    gameData.gameMode === 'MULTIPLAYER' &&
     gameData.roomStatus === 'WAITING_FOR_PLAYER'
   );
 
@@ -38,14 +38,29 @@ const GameStarted = ({ gameData }) => {
     setManualDigits(Array(expectedDigits).fill(''));
   }, [expectedDigits]);
 
-  
-useEffect(() => {
-  if (bgAudioRef.current) {
-    bgAudioRef.current.volume = 0.2; // adjust volume
-    bgAudioRef.current.loop = true;   // loop forever
-    bgAudioRef.current.play().catch(err => console.log('Autoplay blocked:', err));
-  }
-}, []);
+
+  const getDisplayName = (playerId) => {
+    if (!playerId) return '';
+    return playerId.split('#')[0]; // removes #XXXXXX
+  };
+
+
+
+  useEffect(() => {
+    if (roomStatus === 'COMPLETED') {
+      if (!sessionStorage.getItem('gameReloaded')) {
+        sessionStorage.setItem('gameReloaded', 'true');
+        setTimeout(() => window.location.reload(), 2000);
+      }
+    }
+  }, [roomStatus]);
+  useEffect(() => {
+    if (bgAudioRef.current) {
+      bgAudioRef.current.volume = 0.2; // adjust volume
+      bgAudioRef.current.loop = true;   // loop forever
+      bgAudioRef.current.play().catch(err => console.log('Autoplay blocked:', err));
+    }
+  }, []);
 
   useEffect(() => {
     const handlePlayerLeave = () => {
@@ -125,38 +140,38 @@ useEffect(() => {
 
   const handleManualChange = (value, index) => {
     if (!/^\d?$/.test(value)) return;
-  
+
     const updated = [...manualDigits];
     updated[index] = value;
     setManualDigits(updated);
-  
+
     // auto move to next box
     if (value && index < manualDigits.length - 1) {
       document.getElementById(`manual-${index + 1}`)?.focus();
     }
   };
-  
+
   const handleManualKeyDown = (e, index) => {
     if (e.key === 'Backspace' && !manualDigits[index] && index > 0) {
       document.getElementById(`manual-${index - 1}`)?.focus();
     }
   };
-  
+
 
 
   const toggleSound = () => {
     if (!bgAudioRef.current) return;
-  
+
     if (isSoundOn) {
       bgAudioRef.current.pause();
     } else {
-      bgAudioRef.current.play().catch(() => {});
+      bgAudioRef.current.play().catch(() => { });
     }
-  
+
     setIsSoundOn(prev => !prev);
   };
 
-  
+
   const handleGuessSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -182,121 +197,126 @@ useEffect(() => {
 
   return (
 
-<div className="game-container">
-<button
-  className="sound-toggle"
-  onClick={toggleSound}
-  title={isSoundOn ? "Mute sound" : "Play sound"}
->
-  {isSoundOn ? "🔊" : "🔇"}
-</button>
-<button
-  className="exit-toggle"
-  disabled={roomStatus === "COMPLETED"}
-    onClick={async () => {
-      if (roomStatus === "COMPLETED") return;
-      if (window.confirm("Leave game?")) {
-        await endGame(gameData.gameId, gameData.playerId);
-      }
-    }}
->
-  🚪
-</button>
-  <div className="game-card">
-    
-    {playerJoinedNotification && (
-      <div className="notification notification-success">
-        🎉 {playerJoinedNotification.message}
-      </div>
-    )}
-
-{turnNotification && (
-  <div className="notification notification-info">
-    {turnNotification.message} <br />
-    {turnNotification.guessedNumber !== undefined && (
-      <>
-        Guess: {turnNotification.guessedNumber} → {turnNotification.correctDigits} correct <br />
-        {turnNotification.remainingAttempts > 0 && (
-          <>{ turnNotification.playerId}'s Remaining Attempts: {turnNotification.remainingAttempts}</>
-        )}
-      </>
-    )}
-  </div>
-)}
-   
-    {currentPlayerId && roomStatus === 'IN_PROGRESS' && (
-      <div className="turn-indicator">
-        {isMyTurn ? "🎯 It's YOUR turn!" : `⏳ Waiting for ${currentPlayerId}...`}
-      </div>
-    )}
-
-{isWaitingForPlayer && !playerJoinedNotification && (
-  <div className="notification notification-warning">
-    ⏳ Waiting for another player...
-    <div className="room-id-row">
-      <span>Room ID:</span>
-
-      <strong className="room-id-text">
-        {gameData.roomId}
-      </strong>
-
+    <div className="game-container">
       <button
-        className="copy-btn"
-        onClick={() => {
-          navigator.clipboard.writeText(gameData.roomId);
-          setCopied(true);
-          setTimeout(() => setCopied(false), 1500);
-        }}
-        title="Copy Room ID"
+        className="sound-toggle"
+        onClick={toggleSound}
+        title={isSoundOn ? "Mute sound" : "Play sound"}
       >
-        {copied ? "✅ copied" : "📋 Copy"}
+        {isSoundOn ? "🔊" : "🔇"}
       </button>
-    </div>
-  </div>
-)}
+      <button
+        className="exit-toggle"
+        disabled={roomStatus === "COMPLETED"}
+        onClick={async () => {
+          if (roomStatus === "COMPLETED") return;
+          if (window.confirm("Leave game?")) {
+            await endGame(gameData.gameId, gameData.playerId);
+          }
+        }}
+      >
+        🚪
+      </button>
+      <div className="game-card">
 
-
-    {roomStatus === 'COMPLETED' && gameOverMessage && (
-      <div className="notification notification-gameover">
-        🏆 Game Over <br />
-        {gameOverMessage}
-      </div>
-    )}
-
-    <div className="game-grid">
-      {/* Your Guesses */}
-      <div className="guess-panel">
-        <h3 className="guess-title">Your Guesses</h3>
-        {guessHistory.filter(g => g.playerId === gameData.playerId).map((g,i)=>(
-          <div key={i} className="guess-entry">{g.guessedNumber} → {g.correctDigits} correct</div>
-        ))}
-      </div>
-
-      {/* Center Input */}
-      <div className="guess-panel">
-        <h3 className="guess-title text-center">Player: {gameData.playerId}</h3>
-        <p>Secret Number: {gameData.secretNumber}</p>
-
-        {roomStatus === 'IN_PROGRESS' && (
-          <form onSubmit={handleGuessSubmit}>
-            <input
-              className="guess-input"
-              type="text"
-              value={guessInput}
-              onChange={e => setGuessInput(e.target.value.replace(/\D/g,'').slice(0, expectedDigits))}
-              disabled={!isMyTurn || isSubmitting}
-            />
-            <button
-              type="submit"
-              disabled={!isMyTurn || isSubmitting || !guessInput}
-              className="button-primary"
-            >
-              {isSubmitting ? 'Submitting...' : isMyTurn ? 'Submit Guess' : 'Not Your Turn'}
-            </button>
-          </form>
+        {playerJoinedNotification && (
+          <div className="notification notification-success">
+            🎉 {playerJoinedNotification.message}
+          </div>
         )}
 
-{/* {(roomStatus === 'IN_PROGRESS' || roomStatus === 'WAITING_FOR_PLAYER') && (
+        {turnNotification && (
+          <div className="notification notification-info">
+            {turnNotification.message} <br />
+            {turnNotification.guessedNumber !== undefined && (
+              <>
+                Guess: {turnNotification.guessedNumber} → {turnNotification.correctDigits} correct <br />
+                {turnNotification.remainingAttempts > 0 && (
+                  <>{getDisplayName(turnNotification.playerId)}'s Remaining Attempts: {turnNotification.remainingAttempts}</>
+
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {currentPlayerId && roomStatus === 'IN_PROGRESS' && (
+          <div className="turn-indicator">
+            {isMyTurn
+              ? "🎯 It's YOUR turn!"
+              : `⏳ Waiting for ${getDisplayName(currentPlayerId)}...`}
+          </div>
+        )}
+
+        {isWaitingForPlayer && !playerJoinedNotification && (
+          <div className="notification notification-warning">
+            ⏳ Waiting for another player...
+            <div className="room-id-row">
+              <span>Room ID:</span>
+
+              <strong className="room-id-text">
+                {gameData.roomId}
+              </strong>
+
+              <button
+                className="copy-btn"
+                onClick={() => {
+                  navigator.clipboard.writeText(gameData.roomId);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 1500);
+                }}
+                title="Copy Room ID"
+              >
+                {copied ? "✅ copied" : "📋 Copy"}
+              </button>
+            </div>
+          </div>
+        )}
+
+
+        {roomStatus === 'COMPLETED' && gameOverMessage && (
+          <div className="notification notification-gameover">
+            🏆 Game Over <br />
+            {gameOverMessage}
+          </div>
+        )}
+
+        <div className="game-grid">
+          {/* Your Guesses */}
+          <div className="guess-panel">
+            <h3 className="guess-title">Your Guesses</h3>
+            {guessHistory.filter(g => g.playerId === gameData.playerId).map((g, i) => (
+              <div key={i} className="guess-entry">{g.guessedNumber} → {g.correctDigits} correct</div>
+            ))}
+          </div>
+
+          {/* Center Input */}
+          <div className="guess-panel">
+            <h3 className="guess-title text-center">
+              Player: {getDisplayName(gameData.playerId)}
+            </h3>
+            <p>Secret Number: {gameData.secretNumber}</p>
+
+            {roomStatus === 'IN_PROGRESS' && (
+              <form onSubmit={handleGuessSubmit}>
+                <input
+                  className="guess-input"
+                  type="text"
+                  value={guessInput}
+                  onChange={e => setGuessInput(e.target.value.replace(/\D/g, '').slice(0, expectedDigits))}
+                  disabled={!isMyTurn || isSubmitting}
+                />
+                <button
+                  type="submit"
+                  disabled={!isMyTurn || isSubmitting || !guessInput}
+                  className="button-primary"
+                >
+                  {isSubmitting ? 'Submitting...' : isMyTurn ? 'Submit Guess' : 'Not Your Turn'}
+                </button>
+              </form>
+            )}
+
+            {/* {(roomStatus === 'IN_PROGRESS' || roomStatus === 'WAITING_FOR_PLAYER') && (
   <button
     onClick={async () => { 
       if(window.confirm("Leave game?")) {
@@ -308,44 +328,44 @@ useEffect(() => {
     Leave Game
   </button>
 )} */}
-{/* Manual tracking boxes – show only when game is in progress */}
-{roomStatus === 'IN_PROGRESS' && (
-  <div className="mt-4">
-    <p className="text-sm mb-2 text-gray-700">
-      Digits you have figured out:
-    </p>
+            {/* Manual tracking boxes – show only when game is in progress */}
+            {roomStatus === 'IN_PROGRESS' && (
+              <div className="mt-4">
+                <p className="text-sm mb-2 text-gray-700">
+                  Digits you have figured out:
+                </p>
 
-    <div className="flex justify-center gap-2">
-      {manualDigits.map((digit, index) => (
-        <input
-          key={index}
-          id={`manual-${index}`}
-          type="text"
-          inputMode="numeric"
-          maxLength={1}
-          value={digit}
-          onChange={(e) => handleManualChange(e.target.value, index)}
-          onKeyDown={(e) => handleManualKeyDown(e, index)}
-          className="w-12 h-12 text-center text-xl border-2 border-gray-400 rounded-lg focus:outline-none focus:border-yellow-400"
-        />
-      ))}
-    </div>
-  </div>
-)}
+                <div className="flex justify-center gap-2">
+                  {manualDigits.map((digit, index) => (
+                    <input
+                      key={index}
+                      id={`manual-${index}`}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleManualChange(e.target.value, index)}
+                      onKeyDown={(e) => handleManualKeyDown(e, index)}
+                      className="w-12 h-12 text-center text-xl border-2 border-gray-400 rounded-lg focus:outline-none focus:border-yellow-400"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
 
+          </div>
+
+          {/* Opponent Guesses */}
+          <div className="guess-panel">
+            <h3 className="guess-title">Opponent's Guesses</h3>
+            {guessHistory.filter(g => g.playerId !== gameData.playerId).map((g, i) => (
+              <div key={i} className="guess-entry">{g.guessedNumber} → {g.correctDigits} correct</div>
+            ))}
+          </div>
+        </div>
       </div>
-
-      {/* Opponent Guesses */}
-      <div className="guess-panel">
-        <h3 className="guess-title">Opponent's Guesses</h3>
-        {guessHistory.filter(g => g.playerId !== gameData.playerId).map((g,i)=>(
-          <div key={i} className="guess-entry">{g.guessedNumber} → {g.correctDigits} correct</div>
-        ))}
-      </div>
+      <audio ref={bgAudioRef} src={bgMusic} />
     </div>
-  </div>
-  <audio ref={bgAudioRef} src={bgMusic} />
-</div>
 
   );
 };

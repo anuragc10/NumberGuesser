@@ -18,11 +18,29 @@ const StartScreen = ({ onGameStart }) => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+  
+    if (name === 'playerName') {
+      // Allow only alphabets (A–Z, a–z)
+      const sanitizedValue = value.replace(/[^a-zA-Z]/g, '');
+      setFormData((prev) => ({
+        ...prev,
+        playerName: sanitizedValue,
+      }));
+      return;
+    }
+  
     setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
+  
     if (error) setError('');
+  };
+  
+
+  const generateUniquePlayerId = (name) => {
+    const randomId = Math.floor(100000 + Math.random() * 900000); // 6 digits
+    return `${name}#${randomId}`;
   };
 
   const validateSecretNumber = (number, level) => {
@@ -55,13 +73,16 @@ const StartScreen = ({ onGameStart }) => {
     setIsLoading(true);
 
     try {
+      const uniquePlayerId = generateUniquePlayerId(
+        formData.playerName.trim()
+      );
+      
       const gameData = {
         gameMode: GAME_MODES.MULTIPLAYER,
-        playerId: formData.playerName.trim(),
+        playerId: uniquePlayerId,
         level: parseInt(formData.level, 10),
         limitAttempts: formData.limitAttempts,
       };
-      
       if (formData.roomId.trim()) {
         gameData.roomId = formData.roomId.trim();
       }
