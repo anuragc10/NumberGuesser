@@ -20,6 +20,13 @@ const GameStarted = ({ gameData }) => {
   const [copied, setCopied] = useState(false);
 
 
+  const sanitizeMessage = (message) => {
+    if (!message) return '';
+    // removes #123456 style suffixes everywhere
+    return message.replace(/#[0-9]+/g, '');
+  };
+  
+
 
   const [isWaitingForPlayer, setIsWaitingForPlayer] = useState(
     gameData.gameMode === 'MULTIPLAYER' &&
@@ -128,13 +135,14 @@ const GameStarted = ({ gameData }) => {
                 if (alreadyExists) return prev;
             
                 return [
-                  ...prev,
+
                   {
                     playerId: notification.playerId,
                     guessedNumber: notification.guessedNumber,
                     correctDigits: notification.correctDigits,
                     guessNumber: notification.guessNumber
-                  }
+                  },
+                  ...prev
                 ];
               });
             
@@ -238,13 +246,14 @@ setGuessInput('');
 
         {playerJoinedNotification && (
           <div className="notification notification-success">
-            🎉 {playerJoinedNotification.message}
+            🎉 {sanitizeMessage(playerJoinedNotification.message)}
           </div>
         )}
 
         {turnNotification && (
           <div className="notification notification-info">
-            {turnNotification.message} <br />
+            {sanitizeMessage(turnNotification.message)}
+            <br />
             {turnNotification.guessedNumber !== undefined && (
               <>
                 Guess: {turnNotification.guessedNumber} → {turnNotification.correctDigits} correct <br />
@@ -294,7 +303,7 @@ setGuessInput('');
         {roomStatus === 'COMPLETED' && gameOverMessage && (
           <div className="notification notification-gameover">
             🏆 Game Over <br />
-            {gameOverMessage}
+            {sanitizeMessage(gameOverMessage)}
           </div>
         )}
 
