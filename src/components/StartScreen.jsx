@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { startGame } from '../services/api';
 import { GAME_MODES, LEVELS } from '../utils/constants';
 
+
 const StartScreen = ({ onGameStart }) => {
   const [formData, setFormData] = useState({
     playerName: '',
@@ -9,6 +10,7 @@ const StartScreen = ({ onGameStart }) => {
     secretNumber: '',
     useCustomSecret: false,
     limitAttempts: true,
+    roomId: '', 
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -20,24 +22,16 @@ const StartScreen = ({ onGameStart }) => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
-    // Clear error when user starts typing
     if (error) setError('');
   };
 
   const validateSecretNumber = (number, level) => {
-    if (!number) return true; // Empty is valid (API will generate)
-    
+    if (!number) return true;
     const numStr = number.toString();
     const expectedDigits = LEVELS[level].digits;
-    
-    if (numStr.length !== expectedDigits) {
-      return `Secret number must be exactly ${expectedDigits} digits`;
-    }
-    
-    if (!/^\d+$/.test(numStr)) {
-      return 'Secret number must contain only digits';
-    }
-    
+
+    if (numStr.length !== expectedDigits) return `Secret number must be exactly ${expectedDigits} digits`;
+    if (!/^\d+$/.test(numStr)) return 'Secret number must contain only digits';
     return null;
   };
 
@@ -45,18 +39,13 @@ const StartScreen = ({ onGameStart }) => {
     e.preventDefault();
     setError('');
 
-    // Validate player name
     if (!formData.playerName.trim()) {
       setError('Please enter your name');
       return;
     }
 
-    // Validate secret number if provided
     if (formData.useCustomSecret && formData.secretNumber) {
-      const validationError = validateSecretNumber(
-        formData.secretNumber,
-        formData.level
-      );
+      const validationError = validateSecretNumber(formData.secretNumber, formData.level);
       if (validationError) {
         setError(validationError);
         return;
@@ -72,14 +61,16 @@ const StartScreen = ({ onGameStart }) => {
         level: parseInt(formData.level, 10),
         limitAttempts: formData.limitAttempts,
       };
+      
+      if (formData.roomId.trim()) {
+        gameData.roomId = formData.roomId.trim();
+      }
 
-      // Only include secretNumber if user provided one
       if (formData.useCustomSecret && formData.secretNumber) {
         gameData.secretNumber = parseInt(formData.secretNumber, 10);
       }
 
       const response = await startGame(gameData);
-      console.log('Game started successfully:', response);
       onGameStart(response);
     } catch (err) {
       setError(err.message || 'Failed to start game. Please try again.');
@@ -91,26 +82,17 @@ const StartScreen = ({ onGameStart }) => {
   const currentLevelDigits = LEVELS[formData.level].digits;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center p-4">
-      <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-8 w-full max-w-md border border-white/20">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: '#fff8e7' }}>
+      <div className="max-w-md w-full bg-[#fffdf6] p-8 rounded-2xl shadow-[0_4px_15px_rgba(0,0,0,0.2)] border border-[#f0e6d2] font-hand" style={{ fontFamily: "'Patrick Hand', cursive", lineHeight: 1.6 }}>
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">
-            Number Guesser
-          </h1>
-          <p className="text-white/80 text-sm">
-            Start your multiplayer game
-          </p>
+          <h1 className="text-4xl mb-2">Number Guesser</h1>
+          <p className="text-gray-700 text-sm">Start your multiplayer game</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Player Name Input */}
           <div>
-            <label
-              htmlFor="playerName"
-              className="block text-sm font-medium text-white mb-2"
-            >
-              Your Name
-            </label>
+            <label htmlFor="playerName" className="block mb-1 text-gray-800 font-medium">Your Name</label>
             <input
               type="text"
               id="playerName"
@@ -118,44 +100,53 @@ const StartScreen = ({ onGameStart }) => {
               value={formData.playerName}
               onChange={handleInputChange}
               placeholder="Enter your name"
-              className="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
-              required
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 placeholder-gray-400 transition-all"
               disabled={isLoading}
+              required
             />
           </div>
+          {/* Room ID (Optional) */}
+          <div>
+            <label htmlFor="roomId" className="block mb-1 text-gray-800 font-medium">
+              Room ID (optional)
+            </label>
+            <input
+              type="text"
+              id="roomId"
+              name="roomId"
+              value={formData.roomId}
+              onChange={handleInputChange}
+              placeholder="Enter Room ID to join existing game"
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 placeholder-gray-400 transition-all"
+              disabled={isLoading}
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Leave empty to create a new room
+            </p>
+          </div>
+
 
           {/* Level Selection */}
           <div>
-            <label
-              htmlFor="level"
-              className="block text-sm font-medium text-white mb-2"
-            >
-              Game Level
-            </label>
+            <label htmlFor="level" className="block mb-1 text-gray-800 font-medium">Game Level</label>
             <select
               id="level"
               name="level"
               value={formData.level}
               onChange={handleInputChange}
-              className="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-all"
               disabled={isLoading}
             >
               {Object.values(LEVELS).map((level) => (
-                <option
-                  key={level.value}
-                  value={level.value}
-                  className="bg-gray-800 text-white"
-                >
-                  {level.label}
-                </option>
+                <option key={level.value} value={level.value}>{level.label}</option>
               ))}
             </select>
-            <p className="mt-2 text-xs text-white/60">
+            <p className="mt-1 text-xs text-gray-500">
               Level {formData.level} uses {currentLevelDigits} digit numbers
             </p>
           </div>
 
-          {/* Custom Secret Number Toggle */}
+          {/* Custom Secret Number */}
           <div className="flex items-center space-x-3">
             <input
               type="checkbox"
@@ -163,26 +154,15 @@ const StartScreen = ({ onGameStart }) => {
               name="useCustomSecret"
               checked={formData.useCustomSecret}
               onChange={handleInputChange}
-              className="w-5 h-5 rounded border-white/30 bg-white/20 text-blue-600 focus:ring-2 focus:ring-blue-400"
+              className="w-5 h-5 border-gray-300 rounded"
               disabled={isLoading}
             />
-            <label
-              htmlFor="useCustomSecret"
-              className="text-sm font-medium text-white cursor-pointer"
-            >
-              Enter your own secret number (optional)
-            </label>
+            <label htmlFor="useCustomSecret" className="text-gray-800 cursor-pointer">Enter your own secret number (optional)</label>
           </div>
 
-          {/* Secret Number Input */}
           {formData.useCustomSecret && (
-            <div className="animate-fadeIn">
-              <label
-                htmlFor="secretNumber"
-                className="block text-sm font-medium text-white mb-2"
-              >
-                Secret Number ({currentLevelDigits} digits)
-              </label>
+            <div>
+              <label htmlFor="secretNumber" className="block mb-1 text-gray-800 font-medium">Secret Number ({currentLevelDigits} digits)</label>
               <input
                 type="text"
                 id="secretNumber"
@@ -191,20 +171,18 @@ const StartScreen = ({ onGameStart }) => {
                 onChange={handleInputChange}
                 placeholder={`Enter ${currentLevelDigits} digit number`}
                 maxLength={currentLevelDigits}
-                className="w-full px-4 py-3 rounded-lg bg-white/20 border border-white/30 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-all"
                 disabled={isLoading}
               />
-              <p className="mt-2 text-xs text-white/60">
-                Leave empty to let the system generate one for you
-              </p>
+              <p className="mt-1 text-xs text-gray-500">Leave empty to let the system generate one for you</p>
             </div>
           )}
 
-          {/* Attempt Limit Toggle */}
-          <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-lg p-3">
+          {/* Limit Attempts */}
+          <div className="flex items-center justify-between bg-[#fdf9f0] border border-gray-300 rounded-lg p-3">
             <div>
-              <p className="text-sm font-medium text-white">Limit attempts</p>
-              <p className="text-xs text-white/60">Turn off to allow unlimited guesses.</p>
+              <p className="text-gray-800 font-medium">Limit attempts</p>
+              <p className="text-xs text-gray-500">Turn off to allow unlimited guesses.</p>
             </div>
             <label className="inline-flex items-center cursor-pointer">
               <input
@@ -215,56 +193,31 @@ const StartScreen = ({ onGameStart }) => {
                 onChange={handleInputChange}
                 disabled={isLoading}
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-400 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 relative"></div>
+              <div className="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-yellow-400 relative after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:h-5 after:w-5 after:bg-white after:rounded-full after:transition-all peer-checked:after:translate-x-full"></div>
             </label>
           </div>
 
-          {/* Error Message */}
           {error && (
-            <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3 text-red-200 text-sm">
+            <div className="bg-red-100 border border-red-300 rounded-lg p-3 text-red-700 text-sm">
               {error}
             </div>
           )}
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg"
+            className="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold py-3 px-6 rounded-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
           >
-            {isLoading ? (
-              <span className="flex items-center justify-center">
-                <svg
-                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                Starting Game...
-              </span>
-            ) : (
-              'Start Game'
-            )}
+            {isLoading ? 'Starting Game...' : 'Start Game'}
           </button>
         </form>
       </div>
     </div>
+    
+
+
+
   );
 };
 
 export default StartScreen;
-

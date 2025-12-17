@@ -1,0 +1,150 @@
+/* Game Container */
+.game-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background-color: #fff8e7;
+    font-family: 'Patrick Hand', cursive;
+  }
+  
+  /* Card Wrapper */
+  .game-card {
+    max-width: 5xl;
+    width: 100%;
+    background: #fffdf6;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    border: 1px solid #f0e6d2;
+    color: #111;
+  }
+  
+  /* Notifications */
+  .notification {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    text-align: center;
+    font-weight: 600;
+  }
+  
+  .notification-success { background: #e0f8e9; border: 1px solid #a6e3a1; color: #166534; }
+  .notification-info { background: #dbeafe; border: 1px solid #60a5fa; color: #1e40af; }
+  .notification-warning { background: #fef3c7; border: 1px solid #fbbf24; color: #92400e; }
+  .notification-gameover { background: #dcfce7; border: 1px solid #4ade80; color: #166534; font-weight: bold; }
+  
+  /* Grid Layout */
+  .game-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  @media(min-width: 768px) {
+    .game-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  
+  /* Guess Panel */
+  .guess-panel {
+    background: #fdf9f0;
+    border: 1px solid #f0e6d2;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    height: 16rem;
+    overflow-y: auto;
+  }
+  
+  .guess-title { font-weight: 600; margin-bottom: 0.5rem; }
+  .guess-entry { margin-bottom: 0.25rem; font-size: 0.875rem; }
+  
+  /* Input & Buttons */
+  .guess-input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    outline: none;
+  }
+  
+  .guess-input:disabled { opacity: 0.5; cursor: not-allowed; }
+  
+  .button-primary {
+    width: 100%;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    background-color: #facc15;
+    color: #111;
+    transition: all 0.2s;
+  }
+  
+  .button-primary:hover { background-color: #fbbf24; transform: scale(1.05); }
+  
+  .button-danger {
+    color: #b91c1c;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  
+  .button-danger:hover { color: #991b1b; }
+  
+  /* Current Turn Indicator */
+  .turn-indicator {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    text-align: center;
+    font-weight: 600;
+    color: #4c1d95;
+    background: #ede9fe;
+    border: 1px solid #c4b5fd;
+  }
+
+  .game-container {
+    position: relative;
+    min-height: 100vh;
+  }
+  
+  /* Sound button top-left */
+  .sound-toggle {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid #3b82f6;
+    background: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    z-index: 1000;
+  }
+  
+  .sound-toggle:hover {
+    transform: scale(1.05);
+  }
+
+  .room-id-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    justify-content: center;
+  }
+  
+  .room-id-text {
+    font-family: monospace;
+    font-size: 13px;
+  }
+  
+  .copy-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  

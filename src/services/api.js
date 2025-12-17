@@ -72,5 +72,21 @@ export const getGuessHistory = async (roomId) => {
   }
 };
 
+export const endGame = async (gameId, playerId) => {
+  try {
+    const response = await apiClient.post('/guess/end', {
+      gameId,
+      playerId,
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(
+      error.response?.data?.message ||
+      error.message ||
+      'Failed to end game'
+    );
+  }
+};
+
 export default apiClient;
 
