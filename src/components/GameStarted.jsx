@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { connectWebSocket, subscribeToRoom, disconnectWebSocket } from '../services/websocket';
-import { submitGuess, getGuessHistory, endGame } from '../services/api';
+import { submitGuess, endGame } from '../services/api';
 import { LEVELS } from '../utils/constants';
 import './GameStyles.css';
 import bgMusic from '../sound/background.mp3';
@@ -77,19 +77,19 @@ const GameStarted = ({ gameData }) => {
     if (gameData.roomStatus) setRoomStatus(gameData.roomStatus);
   }, [gameData.currentPlayerId, gameData.roomStatus]);
 
-  useEffect(() => {
-    if (roomStatus === 'IN_PROGRESS' && gameData.roomId) {
-      const loadHistory = async () => {
-        try {
-          const history = await getGuessHistory(gameData.roomId);
-          setGuessHistory(history || []);
-        } catch (err) {
-          console.error(err);
-        }
-      };
-      loadHistory();
-    }
-  }, [roomStatus, gameData.roomId]);
+  // useEffect(() => {
+  //   if (roomStatus === 'IN_PROGRESS' && gameData.roomId) {
+  //     const loadHistory = async () => {
+  //       try {
+  //         const history = await getGuessHistory(gameData.roomId);
+  //         setGuessHistory(history || []);
+  //       } catch (err) {
+  //         console.error(err);
+  //       }
+  //     };
+  //     loadHistory();
+  //   }
+  // }, [roomStatus, gameData.roomId]);
 
   useEffect(() => {
     if (gameData.gameMode === 'MULTIPLAYER' && gameData.roomId) {
@@ -117,13 +117,34 @@ const GameStarted = ({ gameData }) => {
               setTimeout(() => setPlayerJoinedNotification(null), 5000);
             } else if (notification.guessedNumber !== undefined) {
               setTurnNotification(notification);
-              if (notification.currentPlayerId) setCurrentPlayerId(notification.currentPlayerId);
-              setTimeout(async () => {
-                const history = await getGuessHistory(gameData.roomId);
-                setGuessHistory(history || []);
-              }, 500);
+            
+              setGuessHistory(prev => {
+                const alreadyExists = prev.some(
+                  g =>
+                    g.playerId === notification.playerId &&
+                    g.guessNumber === notification.guessNumber
+                );
+            
+                if (alreadyExists) return prev;
+            
+                return [
+                  ...prev,
+                  {
+                    playerId: notification.playerId,
+                    guessedNumber: notification.guessedNumber,
+                    correctDigits: notification.correctDigits,
+                    guessNumber: notification.guessNumber
+                  }
+                ];
+              });
+            
+              if (notification.currentPlayerId) {
+                setCurrentPlayerId(notification.currentPlayerId);
+              }
+            
               setTimeout(() => setTurnNotification(null), 5000);
             }
+            
           });
         } catch (err) {
           console.error(err);
@@ -183,11 +204,7 @@ const GameStarted = ({ gameData }) => {
     setIsSubmitting(true);
     try {
       await submitGuess(gameData.gameId, gameData.playerId, guessInput);
-      setGuessInput('');
-      setTimeout(async () => {
-        const history = await getGuessHistory(gameData.roomId);
-        setGuessHistory(history || []);
-      }, 500);
+setGuessInput('');
     } catch (err) {
       setError(err.message || 'Failed to submit guess.');
     } finally {
