@@ -175,7 +175,7 @@ useEffect(() => {
       <>
         Guess: {turnNotification.guessedNumber} → {turnNotification.correctDigits} correct <br />
         {turnNotification.remainingAttempts > 0 && (
-          <>Remaining Attempts: {turnNotification.remainingAttempts}</>
+          <>{ turnNotification.playerId}'s Remaining Attempts: {turnNotification.remainingAttempts}</>
         )}
       </>
     )}
