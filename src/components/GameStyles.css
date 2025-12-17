@@ -123,6 +123,21 @@
     box-shadow: 0 4px 10px rgba(0,0,0,0.15);
     z-index: 1000;
   }
+
+  .exit-toggle {
+    position: fixed;
+    top: 66px;
+    left: 16px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid #3b82f6;
+    background: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    z-index: 1000;
+  }
   
   .sound-toggle:hover {
     transform: scale(1.05);

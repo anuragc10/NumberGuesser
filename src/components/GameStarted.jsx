@@ -19,6 +19,8 @@ const GameStarted = ({ gameData }) => {
   const [isSoundOn, setIsSoundOn] = useState(true);
   const [copied, setCopied] = useState(false);
 
+  
+
   const [isWaitingForPlayer, setIsWaitingForPlayer] = useState(
     gameData.gameMode === 'MULTIPLAYER' && 
     gameData.roomStatus === 'WAITING_FOR_PLAYER'
@@ -29,6 +31,14 @@ const GameStarted = ({ gameData }) => {
   const expectedDigits = LEVELS[gameData.level]?.digits || 2;
   const bgAudioRef = useRef(null);
 
+  const [manualDigits, setManualDigits] = useState(
+    Array(expectedDigits).fill('')
+  );
+  useEffect(() => {
+    setManualDigits(Array(expectedDigits).fill(''));
+  }, [expectedDigits]);
+
+  
 useEffect(() => {
   if (bgAudioRef.current) {
     bgAudioRef.current.volume = 0.2; // adjust volume
@@ -113,6 +123,26 @@ useEffect(() => {
     }
   }, [gameData.roomId, gameData.gameMode, gameData.playerId]);
 
+  const handleManualChange = (value, index) => {
+    if (!/^\d?$/.test(value)) return;
+  
+    const updated = [...manualDigits];
+    updated[index] = value;
+    setManualDigits(updated);
+  
+    // auto move to next box
+    if (value && index < manualDigits.length - 1) {
+      document.getElementById(`manual-${index + 1}`)?.focus();
+    }
+  };
+  
+  const handleManualKeyDown = (e, index) => {
+    if (e.key === 'Backspace' && !manualDigits[index] && index > 0) {
+      document.getElementById(`manual-${index - 1}`)?.focus();
+    }
+  };
+  
+
 
   const toggleSound = () => {
     if (!bgAudioRef.current) return;
@@ -159,6 +189,18 @@ useEffect(() => {
   title={isSoundOn ? "Mute sound" : "Play sound"}
 >
   {isSoundOn ? "🔊" : "🔇"}
+</button>
+<button
+  className="exit-toggle"
+  disabled={roomStatus === "COMPLETED"}
+    onClick={async () => {
+      if (roomStatus === "COMPLETED") return;
+      if (window.confirm("Leave game?")) {
+        await endGame(gameData.gameId, gameData.playerId);
+      }
+    }}
+>
+  🚪
 </button>
   <div className="game-card">
     
@@ -254,7 +296,7 @@ useEffect(() => {
           </form>
         )}
 
-{(roomStatus === 'IN_PROGRESS') && (
+{/* {(roomStatus === 'IN_PROGRESS' || roomStatus === 'WAITING_FOR_PLAYER') && (
   <button
     onClick={async () => { 
       if(window.confirm("Leave game?")) {
@@ -265,7 +307,32 @@ useEffect(() => {
   >
     Leave Game
   </button>
+)} */}
+{/* Manual tracking boxes – show only when game is in progress */}
+{roomStatus === 'IN_PROGRESS' && (
+  <div className="mt-4">
+    <p className="text-sm mb-2 text-gray-700">
+      Digits you have figured out:
+    </p>
+
+    <div className="flex justify-center gap-2">
+      {manualDigits.map((digit, index) => (
+        <input
+          key={index}
+          id={`manual-${index}`}
+          type="text"
+          inputMode="numeric"
+          maxLength={1}
+          value={digit}
+          onChange={(e) => handleManualChange(e.target.value, index)}
+          onKeyDown={(e) => handleManualKeyDown(e, index)}
+          className="w-12 h-12 text-center text-xl border-2 border-gray-400 rounded-lg focus:outline-none focus:border-yellow-400"
+        />
+      ))}
+    </div>
+  </div>
 )}
+
       </div>
 
       {/* Opponent Guesses */}
