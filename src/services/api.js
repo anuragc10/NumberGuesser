@@ -90,8 +90,7 @@ export const endGame = async (gameId, playerId) => {
 
 export const getRoomDetails = async (roomId) => {
   try {
-    const encodedRoomId = encodeURIComponent(roomId);
-    const response = await apiClient.get(`/guess/room/${encodedRoomId}`);
+    const response = await apiClient.post('/guess/roomDetails', { roomId });
     return response.data;
   } catch (error) {
     throw new Error(
