@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { startGame } from '../services/api';
+import { useState, useEffect } from 'react';
+import { startGame, getGuessHistory, getRoomDetails } from '../services/api';
 import { GAME_MODES, LEVELS } from '../utils/constants';
 
 
@@ -10,15 +10,49 @@ const StartScreen = ({ onGameStart }) => {
     secretNumber: '',
     useCustomSecret: false,
     limitAttempts: true,
-    roomId: '', 
+    roomId: '',
   });
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isRoomValid, setIsRoomValid] = useState(false);
+
+  // Validate Room ID with backend
+
+
+  useEffect(() => {
+    const checkRoom = async () => {
+      const trimmedRoomId = formData.roomId.trim();
+      if (!trimmedRoomId) {
+        setIsRoomValid(false);
+        return;
+      }
+
+      try {
+        const roomDetails = await getRoomDetails(trimmedRoomId);
+        setIsRoomValid(true);
+        // Automatically set level and limitAttempts based on room details
+        setFormData(prev => ({
+          ...prev,
+          level: roomDetails.level,
+          limitAttempts: roomDetails.limitAttempts
+        }));
+      } catch (err) {
+        // console.error('Room validation failed:', err); // For debugging
+        setIsRoomValid(false);
+      }
+    };
+
+    const timeoutId = setTimeout(() => {
+      checkRoom();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [formData.roomId]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-  
+
     if (name === 'playerName') {
       // Allow only alphabets (A–Z, a–z)
       const sanitizedValue = value.replace(/[^a-zA-Z]/g, '');
@@ -28,15 +62,15 @@ const StartScreen = ({ onGameStart }) => {
       }));
       return;
     }
-  
+
     setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
-  
+
     if (error) setError('');
   };
-  
+
 
   const generateUniquePlayerId = (name) => {
     const randomId = Math.floor(100000 + Math.random() * 900000); // 6 digits
@@ -76,7 +110,7 @@ const StartScreen = ({ onGameStart }) => {
       const uniquePlayerId = generateUniquePlayerId(
         formData.playerName.trim()
       );
-      
+
       const gameData = {
         gameMode: GAME_MODES.MULTIPLAYER,
         playerId: uniquePlayerId,
@@ -138,7 +172,7 @@ const StartScreen = ({ onGameStart }) => {
               value={formData.roomId}
               onChange={handleInputChange}
               placeholder="Enter Room ID to join existing game"
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 placeholder-gray-400 transition-all"
+              className={`w-full px-4 py-3 rounded-lg border ${isRoomValid ? 'border-green-500 focus:ring-green-400' : 'border-gray-300 focus:ring-yellow-400'} focus:outline-none focus:ring-2 placeholder-gray-400 transition-all`}
               disabled={isLoading}
             />
             <p className="mt-1 text-xs text-gray-500">
@@ -156,12 +190,13 @@ const StartScreen = ({ onGameStart }) => {
               value={formData.level}
               onChange={handleInputChange}
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-all"
-              disabled={isLoading}
+              disabled={isLoading || (!!formData.roomId && isRoomValid)}
             >
               {Object.values(LEVELS).map((level) => (
                 <option key={level.value} value={level.value}>{level.label}</option>
               ))}
             </select>
+            {formData.roomId && isRoomValid && <p className="mt-1 text-xs text-orange-500">Level is determined by the room.</p>}
             <p className="mt-1 text-xs text-gray-500">
               Level {formData.level} uses {currentLevelDigits} digit numbers
             </p>
@@ -212,7 +247,7 @@ const StartScreen = ({ onGameStart }) => {
                 className="sr-only peer"
                 checked={formData.limitAttempts}
                 onChange={handleInputChange}
-                disabled={isLoading}
+                disabled={isLoading || (!!formData.roomId && isRoomValid)}
               />
               <div className="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-yellow-400 relative after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:h-5 after:w-5 after:bg-white after:rounded-full after:transition-all peer-checked:after:translate-x-full"></div>
             </label>
@@ -234,7 +269,7 @@ const StartScreen = ({ onGameStart }) => {
         </form>
       </div>
     </div>
-    
+
 
 
 

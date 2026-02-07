@@ -23,8 +23,8 @@ export const startGame = async (gameData) => {
     return response.data;
   } catch (error) {
     throw new Error(
-      error.response?.data?.message || 
-      error.message || 
+      error.response?.data?.message ||
+      error.message ||
       'Failed to start game'
     );
   }
@@ -47,8 +47,8 @@ export const submitGuess = async (gameId, playerId, guess) => {
     return response.data;
   } catch (error) {
     throw new Error(
-      error.response?.data?.message || 
-      error.message || 
+      error.response?.data?.message ||
+      error.message ||
       'Failed to submit guess'
     );
   }
@@ -65,8 +65,8 @@ export const getGuessHistory = async (roomId) => {
     return response.data;
   } catch (error) {
     throw new Error(
-      error.response?.data?.message || 
-      error.message || 
+      error.response?.data?.message ||
+      error.message ||
       'Failed to get guess history'
     );
   }
@@ -84,6 +84,20 @@ export const endGame = async (gameId, playerId) => {
       error.response?.data?.message ||
       error.message ||
       'Failed to end game'
+    );
+  }
+};
+
+export const getRoomDetails = async (roomId) => {
+  try {
+    const encodedRoomId = encodeURIComponent(roomId);
+    const response = await apiClient.get(`/guess/room/${encodedRoomId}`);
+    return response.data;
+  } catch (error) {
+    throw new Error(
+      error.response?.data?.message ||
+      error.message ||
+      'Failed to get room details'
     );
   }
 };

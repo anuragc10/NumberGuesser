@@ -25,7 +25,7 @@ const GameStarted = ({ gameData }) => {
     // removes #123456 style suffixes everywhere
     return message.replace(/#[0-9]+/g, '');
   };
-  
+
 
 
   const [isWaitingForPlayer, setIsWaitingForPlayer] = useState(
@@ -124,16 +124,16 @@ const GameStarted = ({ gameData }) => {
               setTimeout(() => setPlayerJoinedNotification(null), 5000);
             } else if (notification.guessedNumber !== undefined) {
               setTurnNotification(notification);
-            
+
               setGuessHistory(prev => {
                 const alreadyExists = prev.some(
                   g =>
                     g.playerId === notification.playerId &&
                     g.guessNumber === notification.guessNumber
                 );
-            
+
                 if (alreadyExists) return prev;
-            
+
                 return [
 
                   {
@@ -145,14 +145,14 @@ const GameStarted = ({ gameData }) => {
                   ...prev
                 ];
               });
-            
+
               if (notification.currentPlayerId) {
                 setCurrentPlayerId(notification.currentPlayerId);
               }
-            
+
               setTimeout(() => setTurnNotification(null), 5000);
             }
-            
+
           });
         } catch (err) {
           console.error(err);
@@ -212,7 +212,7 @@ const GameStarted = ({ gameData }) => {
     setIsSubmitting(true);
     try {
       await submitGuess(gameData.gameId, gameData.playerId, guessInput);
-setGuessInput('');
+      setGuessInput('');
     } catch (err) {
       setError(err.message || 'Failed to submit guess.');
     } finally {
@@ -326,7 +326,7 @@ setGuessInput('');
             {roomStatus === 'IN_PROGRESS' && (
               <form onSubmit={handleGuessSubmit}>
                 <input
-                  className="guess-input"
+                  className={`guess-input ${isMyTurn ? 'guess-input-active' : ''}`}
                   type="text"
                   value={guessInput}
                   onChange={e => setGuessInput(e.target.value.replace(/\D/g, '').slice(0, expectedDigits))}
@@ -335,7 +335,7 @@ setGuessInput('');
                 <button
                   type="submit"
                   disabled={!isMyTurn || isSubmitting || !guessInput}
-                  className="button-primary"
+                  className={`button-primary ${isMyTurn ? 'button-success' : ''}`}
                 >
                   {isSubmitting ? 'Submitting...' : isMyTurn ? 'Submit Guess' : 'Not Your Turn'}
                 </button>
