@@ -90,7 +90,7 @@ export const endGame = async (gameId, playerId) => {
 
 export const getRoomDetails = async (roomId) => {
   try {
-    const response = await apiClient.post('/guess/roomDetails', { roomId });
+    const response = await apiClient.get(`/guess/roomDetails/${roomId}`);
     return response.data;
   } catch (error) {
     throw new Error(
